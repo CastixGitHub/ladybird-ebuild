@@ -15,29 +15,28 @@ https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.da
 "
 RESTRICT="mirror"
 
-LICENSE="BSD 2-Clause"
+#LICENSE="BSD 2-Clause"
+LICENSE="BSD"
 SLOT="0"
-KEYWORDS=""
+KEYWORDS="amd64"
 
-CC="clang"
-CPP="clang-cpp" # necessary for xorg-server and possibly other packages
-CXX="clang++"
-AR="llvm-ar"
-NM="llvm-nm"
-RANLIB="llvm-ranlib"
+# clang takes 10h to 24 hours on my pc
+# gcc 30minuts to 1 hour (my cpufreq is broken)
 
-IUSE="system-webp"
+IUSE="+system-webp"
 
 # how to version check skia on 9999?
 DEPEND="
-	media-libs/skia
-	media-libs/webp
+	media-libs/skia:129
+	media-libs/libwebp
 	virtual/libcrypt
+	dev-db/sqlite
+	dev-libs/icu
+	dev-qt/qtbase:6[network,widgets,gui]
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
-	sys-devel/clang:18
-	sys-devel/llvm:18
+	clang? ( sys-devel/clang:18 )
 "
 
 src_prepare() {
@@ -76,6 +75,13 @@ EOF
 	cp /var/cache/distfiles/cacert-2023-12-12.pem ${S}/Lagom/cacert.pem || die "unable to copy mozilla cert root"
 	#cp /var/cache/distfiles/public_suffix_list.dat ${S}/downloads/ || die "unable to copy publix suffix list"
 
+	# this setrlimit is invalid
+	# prlimit64(0, RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=4*1024}, NULL) = -1 EINVAL (Inval      id argument)
+	# write(2, "Unable to increase open file limit: setrlimit: Invalid argument (errno=22)\n",       75) = 75
+	# also it feels weird to have so many file descriptors simultaneously, even for 15 tabs.
+	# don't they get closed? like mapped to memory, cached or something...
+	sed -i ${S}/Userland/Libraries/LibWebView/ChromeProcess.cpp \
+		-e 's/8192/4096/' || or die "unable to patch setrlimit"
 
 	cmake_src_prepare
 	eapply_user
@@ -83,6 +89,7 @@ EOF
 
 src_configure() {
 	local mycmakeargs=(
+		# actually everything is system (nothing is patched) just slot them properly
 		#$(cmake_use_find_package system-skia skia)
 		$(cmake_use_find_package system-webp webp)
 		-DENABLE_NETWORK_DOWNLOADS=OFF

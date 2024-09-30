@@ -7,17 +7,26 @@ inherit git-r3
 DESCRIPTION="Graphics engine for Chrome, Firefox, Ladybird, Android, Flutter"
 HOMEPAGE="https://skia.org"
 EGIT_REPO_URI="https://skia.googlesource.com/skia.git"
-EGIT_BRANCH="chrome/m129"
+EGIT_BRANCH="chrome/m${PV}"
 
 LICENSE="BSD"
-SLOT="0"
+SLOT="${PV}"
 KEYWORDS="~amd64"
 
-CXX_FLAGS="-std=c++17"
+CXX_FLAGS="-std=c++17"  # should i prefer this or as arg to gn?
 
-DEPEND=""
+DEPEND="
+	media-libs/webp
+	media-libs/png
+	media-libs/fontconfig
+	media-libs/freetype
+	media-libs/harfbuzz
+	dev-libs/icu
+	dev-libs/expat
+"
 RDEPEND="${DEPEND}"
 # dev-util/spirv-tools for intel iGPUs
+# spirv_validation is disabled, also, what is this thing?
 BDEPEND="
 	dev-build/gn
 	dev-util/spirv-tools

@@ -12,7 +12,7 @@ HOMEPAGE="https://simdutf.github.io/simdutf"
 EGIT_REPO_URI="https://github.com/simdutf/simdutf"
 EGIT_COMMIT="v${PV}" #"v5.5.0"
 
-LICENSE="APACHE2"
+LICENSE="APACHE"
 SLOT="0"
 KEYWORDS="~amd64"
 
