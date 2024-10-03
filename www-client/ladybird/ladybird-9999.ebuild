@@ -15,8 +15,7 @@ https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.da
 "
 RESTRICT="mirror"
 
-#LICENSE="BSD 2-Clause"
-LICENSE="BSD"
+LICENSE="BSD-2"
 SLOT="0"
 KEYWORDS="amd64"
 
