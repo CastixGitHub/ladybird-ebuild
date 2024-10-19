@@ -22,7 +22,7 @@ KEYWORDS="amd64"
 # clang takes 10h to 24 hours on my pc
 # gcc 30minuts to 1 hour (my cpufreq is broken)
 
-IUSE="+system-webp"
+IUSE="+system-webp clang"
 
 # how to version check skia on 9999?
 DEPEND="
