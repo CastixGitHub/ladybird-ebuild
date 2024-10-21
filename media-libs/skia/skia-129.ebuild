@@ -2,7 +2,9 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-inherit git-r3
+LLVM_COMPAT=( 17 18 )
+LLVM_OPTIONAL="yeah"
+inherit git-r3 llvm-r1
 
 DESCRIPTION="Graphics engine for Chrome, Firefox, Ladybird, Android, Flutter"
 HOMEPAGE="https://skia.org"
@@ -12,12 +14,13 @@ EGIT_BRANCH="chrome/m${PV}"
 LICENSE="BSD"
 SLOT="${PV}"
 KEYWORDS="~amd64"
+CXX_FLAGS="-std=c++17"
 
-CXX_FLAGS="-std=c++17"  # should i prefer this or as arg to gn?
 
 DEPEND="
-	media-libs/webp
-	media-libs/png
+	media-libs/libwebp
+	media-libs/libpng
+	media-libs/libjpeg-turbo
 	media-libs/fontconfig
 	media-libs/freetype
 	media-libs/harfbuzz
@@ -29,14 +32,21 @@ RDEPEND="${DEPEND}"
 # spirv_validation is disabled, also, what is this thing?
 BDEPEND="
 	dev-build/gn
+	clang? (
+		$(llvm_gen_dep '
+			sys-devel/clang:${LLVM_SLOT}=
+			sys-devel/llvm:${LLVM_SLOT}=
+		')
+	)
 	dev-util/spirv-tools
+	dev-util/patchelf
 "
 
+IUSE="clang"
 
-# skia_use_system_ffmpeg=true \
-# skia_use_system_fontconfig=true \
 src_prepare() {
-	gn gen out --args=" \
+	local myskiaargs=""
+	myskiaargs+=" \
 is_official_build=false \
 is_component_build=true \
 skia_use_system_expat=true \
@@ -52,6 +62,16 @@ skia_use_dng_sdk=false \
 skia_use_wuffs=false \
 skia_use_zlib=false \
 "
+
+	if use clang ; then
+		_LL_BIN="/usr/lib/llvm/${LLVM_SLOT}/bin/"
+		export CC="${_LL_BIN}clang"
+		export CPP="${_LL_BIN}clang-cpp" # unecessary?
+		export CXX="${_LL_BIN}clang++"
+		myskiaargs+="cc=\"${CC}\" cxx=\"${CXX}\""
+	fi
+
+	gn gen out --args="${myskiaargs}"
 	eapply_user
 }
 
@@ -63,18 +83,20 @@ src_install() {
 	# installing header files
 	dodir /usr/include/skia
 	dodir /usr/include/skia/modules
-	cp -a ${S}/include/* ${D}/usr/include/skia || die "Installing headers failed"
+	cp -a ${S}/include/* "${D}/usr/include/skia" || die "Installing headers failed"
 	# installing header files for modules
-	for f in $(find ${S}/modules/ -type f -regex '.*\.h$') ; do
+	for f in $(find "${S}/modules/" -type f -regex '.*\.h$') ; do
 		if [[ $(basename $(dirname $f)) == "include" ]]; then
-			dp=$D/usr/include/skia/modules/$(basename $(dirname $(dirname $f)))/$(basename $f)
+			dp="$D/usr/include/skia/modules/$(basename $(dirname $(dirname $f)))/$(basename $f)"
 		else
-			dp=$D/usr/include/skia/modules/$(basename $(dirname $f))/$(basename $f)
+			dp="$D/usr/include/skia/modules/$(basename $(dirname $f))/$(basename $f)"
 		fi
 		if [[ ! -d $(dirname $dp) ]] then
 			echo "creating folder $(dirname $dp)" 2>&1
 			mkdir -p $(dirname $dp) || die "unable to create a folder $(dirname $dp)"
 		fi
+		# 01:18 < asdrubic1ble> sam_: i want a prefix, so as a workaround i suppose i can mkdir and mv every header into that
+		# 01:18 <@sam_> ideally just fix the build system instead..
 		cp -a $f $dp || die "installing module headers $f -> $dp"
 		sed \
 		    -e 's@include "modules\([^"]*\)"@include <skia/modules\1>@g' \
@@ -82,7 +104,9 @@ src_install() {
 			|| die "unable to patch $dp"
 	done
 	# specifically override skcms header
-	cp -a $S/modules/skcms/src/skcms_public.h $D/usr/include/skia/modules/skcms/skcms.h
+	cp -a "$S/modules/skcms/src/skcms_public.h" \
+		"$D/usr/include/skia/modules/skcms/skcms.h" \
+		|| die "unable to copy skcms header"
 	# patching header files inclusion
 	for f in $(find ${D}/usr/include/skia/ -type f -regex '.*\.h$') ; do
 		echo "patching $f" 2>&1
@@ -92,22 +116,82 @@ src_install() {
 			-i $f \
 			|| die "unable to patch $f"
 	done
-	# libskcms.a libskshaper.so libbentleyottmann.so libskia.so libskunicode_core.so
-	# libpathkit.a libskparagraph.so libskunicode_icu.so
-	#
-	# how to enable other archs?
-	dodir /usr/lib64
-	cp ${S}/out/*.so ${S}/out/*.a "${D}/usr/lib64" || die "Install failed!"
-	# TODO: is this even needed?
+	ABILIBDIR="/usr/$(get_libdir)/skia"
+	DLIBDIR="${D}${ABILIBDIR}"
+	dodir "/usr/$(get_libdir)/skia"
+	mkdir -p $DLIBDIR || die "unable to make a dir"
+
+	# skia "modules"
+	cp -a "${S}/out/libpathkit.a" \
+		"${S}/out/libskcms.a" \
+		"${S}/out/libbentleyottmann.so" \
+		"$DLIBDIR" \
+		|| die "unable to install skia modules"
+
+	# actual skia
+	cp -a "${S}/out/libskia.so" \
+		"${S}/out/libskparagraph.so" \
+		"${S}/out/libskshaper.so" \
+		"${S}/out/libskunicode_core.so" \
+		"${S}/out/libskunicode_icu.so" \
+		"$DLIBDIR" \
+		|| die "unable to install skia"
+
+	chmod 644 $DLIBDIR/*.a
+	chmod 755 $DLIBDIR/*.so
+
+	# then replace paths
+	patchelf --add-rpath "$ABILIBDIR"  \
+		"$DLIBDIR/libskparagraph.so"
+	patchelf --add-rpath "$ABILIBDIR"  \
+		"$DLIBDIR/libskshaper.so"
+	patchelf --add-rpath "$ABILIBDIR"  \
+		"$DLIBDIR/libskunicode_core.so"
+	patchelf --add-rpath "$ABILIBDIR"  \
+		"$DLIBDIR/libskunicode_icu.so"
+	#patchelf --replace-needed				\
+	#	libskshaper.so						\
+	#	"$ABILIBDIR/libskshaper.so"			\
+	#	"$DLIBDIR/libskparagraph.so"		\
+	#	|| die "unable to patchelf"
+	#patchelf --replace-needed				\
+	#	libskunicode_core.soc				\
+	#	"$ABILIBDIR/libskunicode_core.so"	\
+	#	"$DLIBDIR/libskparagraph.so"		\
+	#	|| die "unable to patchelf"
+	#patchelf --replace-needed				\
+	#	libskunicode_icu.so					\
+	#	"$ABILIBDIR/libskunicode_icu.so"	\
+	#	"$DLIBDIR/libskparagraph.so"		\
+	#	|| die "unable to patchelf"
+
+	#patchelf --replace-needed				\
+	#	libskunicode_core.so				\
+	#	"$ABILIBDIR/libskunicode_core.so"	\
+	#	"$DLIBDIR/libskshaper.so"			\
+	#	|| die "unable to patchelf"
+	#patchelf --replace-needed				\
+	#	libskunicode_icu.so					\
+	#	"$ABILIBDIR/libskunicode_icu.so"	\
+	#	"$DLIBDIR/libskshaper.so"			\
+	#	|| die "unable to patchelf"
+
+	#patchelf --replace-needed				\
+	#	libskunicode_core.so				\
+	#	"$ABILIBDIR/libskunicode_core.so"	\
+	#	"$DLIBDIR/libskunicode_icu.so"		\
+	#	|| die "unable to patchelf"
+
 	dodir /usr/share/pkgconfig
-	cat > ${D}/usr/share/pkgconfig/skia.pc<<EOF
-prefix=/usr/lib64
+	cat > "${D}/usr/share/pkgconfig/skia.pc"<<EOF
+prefix=${ABILIBDIR}
 includedir=/usr/include/skia
 
 Name: skia
 Description: ${DESCRIPTION}
 Version: ${PV}
-Cflags: -I/usr/include
+Cflags: -I/usr/include/skia
+Libs: -L${ABILIBDIR} -lskia
 EOF
 	einstalldocs
 }
@@ -146,29 +230,3 @@ EOF
 #      From //third_party/zlib/zlib.gni:7
 #
 #
-# $ ldd /usr/lib64/libskia.so
-#	linux-vdso.so.1 (0x00007ffceffd2000)
-#	libfontconfig.so.1 => /usr/lib64/libfontconfig.so.1 (0x00007f7b0c11d000)
-#	libfreetype.so.6 => /usr/lib64/libfreetype.so.6 (0x00007f7b0c001000)
-#	libexpat.so.1 => /usr/lib64/libexpat.so.1 (0x00007f7b0bfd8000)
-#	libGL.so.1 => /usr/lib64/libGL.so.1 (0x00007f7b0bf65000)
-#	libjpeg.so.62 => /usr/lib64/libjpeg.so.62 (0x00007f7b0be4e000)
-#	libpng16.so.16 => /usr/lib64/libpng16.so.16 (0x00007f7b0be01000)
-#	libwebp.so.7 => /usr/lib64/libwebp.so.7 (0x00007f7b0bd4a000)
-#	libwebpdemux.so.2 => /usr/lib64/libwebpdemux.so.2 (0x00007f7b0bd42000)
-#	libwebpmux.so.3 => /usr/lib64/libwebpmux.so.3 (0x00007f7b0bd32000)
-#	libstdc++.so.6 => /usr/lib/gcc/x86_64-pc-linux-gnu/13/libstdc++.so.6 (0x00007f7b0bacb000)
-#	libm.so.6 => /usr/lib64/libm.so.6 (0x00007f7b0b9e1000)
-#	libgcc_s.so.1 => /usr/lib/gcc/x86_64-pc-linux-gnu/13/libgcc_s.so.1 (0x00007f7b0b9bc000)
-#	libc.so.6 => /usr/lib64/libc.so.6 (0x00007f7b0b7b9000)
-#	/lib64/ld-linux-x86-64.so.2 (0x00007f7b0d45a000)
-#	libz.so.1 => /usr/lib64/libz.so.1 (0x00007f7b0b794000)
-#	libbz2.so.1 => /usr/lib64/libbz2.so.1 (0x00007f7b0b778000)
-#	libGLdispatch.so.0 => /usr/lib64/libGLdispatch.so.0 (0x00007f7b0b6fd000)
-#	libGLX.so.0 => /usr/lib64/libGLX.so.0 (0x00007f7b0b6c0000)
-#	libsharpyuv.so.0 => /usr/lib64/libsharpyuv.so.0 (0x00007f7b0b6b4000)
-#	libX11.so.6 => /usr/lib64/libX11.so.6 (0x00007f7b0b53c000)
-#	libxcb.so.1 => /usr/lib64/libxcb.so.1 (0x00007f7b0b504000)
-#	libXau.so.6 => /usr/lib64/libXau.so.6 (0x00007f7b0b4fe000)
-#	libXdmcp.so.6 => /usr/lib64/libXdmcp.so.6 (0x00007f7b0b4f5000)
-

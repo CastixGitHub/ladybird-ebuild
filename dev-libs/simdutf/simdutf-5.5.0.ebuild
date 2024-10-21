@@ -15,10 +15,10 @@ EGIT_COMMIT="v${PV}" #"v5.5.0"
 LICENSE="Apache-2.0"
 SLOT="0"
 KEYWORDS="~amd64"
+#  VisibleVcsPkg: version 5.5.0: VCS version visible for KEYWORDS="~amd64", profile default/linux/amd64/23.0 (68 total)
+#  What does this means?
+#  Apparently we should not use any keyword for 9999 packages, but this is not, probably wants a tarball then.
 
-DEPEND=""
-RDEPEND="${DEPEND}"
-BDEPEND=""
 
 src_configure() {
 	#local cmakeargs=(

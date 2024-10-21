@@ -2,9 +2,12 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-inherit git-r3 cmake
+LLVM_COMPAT=( 17 18 )
+LLVM_OPTIONAL="yeah"
+inherit git-r3 cmake llvm-r1
 
 DESCRIPTION="Truly independent web browser"
+LICENSE="BSD-2"
 HOMEPAGE="https://ladybird.org"
 EGIT_REPO_URI="https://github.com/ladybirdbrowser/ladybird.git"
 EGIT_COMMIT="HEAD"
@@ -15,14 +18,13 @@ https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.da
 "
 RESTRICT="mirror"
 
-LICENSE="BSD-2"
 SLOT="0"
-KEYWORDS="amd64"
+KEYWORDS=""
 
 # clang takes 10h to 24 hours on my pc
 # gcc 30minuts to 1 hour (my cpufreq is broken)
 
-IUSE="+system-webp clang"
+IUSE="clang"
 
 # how to version check skia on 9999?
 DEPEND="
@@ -35,8 +37,17 @@ DEPEND="
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
-	clang? ( sys-devel/clang:18 )
+	clang? (
+		$(llvm_gen_dep '
+			sys-devel/clang:${LLVM_SLOT}=
+			sys-devel/llvm:${LLVM_SLOT}=
+		')
+	)
 "
+
+pkg_setup() {
+	llvm-r1_pkg_setup
+}
 
 src_prepare() {
 	# temporary workaround my last skia install
@@ -88,9 +99,6 @@ EOF
 
 src_configure() {
 	local mycmakeargs=(
-		# actually everything is system (nothing is patched) just slot them properly
-		#$(cmake_use_find_package system-skia skia)
-		$(cmake_use_find_package system-webp webp)
 		-DENABLE_NETWORK_DOWNLOADS=OFF
 		-DSERENITY_CACHE_DIR=${BUILD_DIR}/downloads
 	)
