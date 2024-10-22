@@ -13,7 +13,6 @@ EGIT_REPO_URI="https://github.com/ladybirdbrowser/ladybird.git"
 EGIT_COMMIT="HEAD"
 #https://download.adobe.com/pub/adobe/iccprofiles/win/AdobeICCProfilesCS4Win_end-user.zip
 SRC_URI="
-https://curl.se/ca/cacert-2023-12-12.pem -> cacert
 https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.dat -> suffixes
 "
 RESTRICT="mirror"
@@ -34,6 +33,7 @@ DEPEND="
 	dev-db/sqlite
 	dev-libs/icu
 	dev-qt/qtbase:6[network,widgets,gui]
+	app-misc/ca-certificates
 "
 RDEPEND="${DEPEND}"
 BDEPEND="
@@ -43,6 +43,7 @@ BDEPEND="
 			sys-devel/llvm:${LLVM_SLOT}=
 		')
 	)
+	virtual/pkgconfig
 "
 
 pkg_setup() {
@@ -82,8 +83,6 @@ EOF
 		-e 's@^.*configure_file.*$@#&@'
 	# patching cmake verify globs
 	mkdir -p ${S}/Lagom || die "unable to create directory"
-	cp /var/cache/distfiles/cacert-2023-12-12.pem ${S}/Lagom/cacert.pem || die "unable to copy mozilla cert root"
-	#cp /var/cache/distfiles/public_suffix_list.dat ${S}/downloads/ || die "unable to copy publix suffix list"
 
 	# this setrlimit is invalid
 	# prlimit64(0, RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=4*1024}, NULL) = -1 EINVAL (Inval      id argument)
@@ -92,6 +91,7 @@ EOF
 	# don't they get closed? like mapped to memory, cached or something...
 	sed -i ${S}/Userland/Libraries/LibWebView/ChromeProcess.cpp \
 		-e 's/8192/4096/' || or die "unable to patch setrlimit"
+	ln -s /etc/ssl/certs/ca-certificates.crt ${S}/Lagom/cacert.pem || die "unable to copy ca-certificates"
 
 	cmake_src_prepare
 	eapply_user
@@ -105,19 +105,19 @@ src_configure() {
 	mkdir -p ${BUILD_DIR}/downloads/CACERT/ || die "unable to mkdir"
 	mkdir -p ${BUILD_DIR}/downloads/PublicSuffix/ || die "unable to mkdir"
 	mkdir -p ${BUILD_DIR}/Lagom/ || dir "unable to mkdir"
-	cp ${S}/Lagom/cacert.pem ${BUILD_DIR}/Lagom/cacert.pem || die "unable to copy mozilla cert root"
-	cp /var/cache/distfiles/cacert ${BUILD_DIR}/downloads/CACERT/cacert-2023-12-12.pem || die "copying CA root"
+	ln -s /etc/ssl/certs/ca-certificates.crt ${BUILD_DIR}/Lagom/cacert.pem || die "unable to copy ca-certificates"
+	ln -s /etc/ssl/certs/ca-certificates.crt ${BUILD_DIR}/downloads/CACERT/cacert-2023-12-12.pem || die "copying CA root"
 	cp /var/cache/distfiles/suffixes ${BUILD_DIR}/downloads/PublicSuffix/public_suffix_list.dat || dir "copying suffixes"
 	cmake_src_configure
 
 	# i don't get cmake. it's a total waste of time on the docs while patching the generated is easy
 	# webp is lib prefixed...
 	# it chooses the libsimdutf.a instead .so when everywhere the opposite is stated
-	# doesn't add -lskia where needed
+	# doesn't add -lskia where needed (probably it can now do it)
 	sed -i ${BUILD_DIR}/build.ninja \
 		-e 's@/usr/local/lib64/libsimdutf.a@/usr/lib64/libsimdutf.so@g' \
 		-e 's/-llibwebpmux/-lwebpmux/g' \
-		-e 's@^  LINK_LIBRARIES.*liblagom-gfx.so.*$@& -lskia@' \
+		-e 's@^  LINK_LIBRARIES.*liblagom-gfx.so.*$@& `pkg-config --libs skia`@' \
 		|| die "unable to patch build.ninja"
 }
 
