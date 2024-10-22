@@ -18,7 +18,7 @@ This is for you
 
 ##### Disclaimer
 
-Skia and Ladybird have been pached heavily to ensure skia libraries have a prefix
+Skia and Ladybird have been pached to ensure skia libraries have a prefix
 
 
 ### Debugging

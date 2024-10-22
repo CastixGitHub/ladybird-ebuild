@@ -95,8 +95,6 @@ src_install() {
 			echo "creating folder $(dirname $dp)" 2>&1
 			mkdir -p $(dirname $dp) || die "unable to create a folder $(dirname $dp)"
 		fi
-		# 01:18 < asdrubic1ble> sam_: i want a prefix, so as a workaround i suppose i can mkdir and mv every header into that
-		# 01:18 <@sam_> ideally just fix the build system instead..
 		cp -a $f $dp || die "installing module headers $f -> $dp"
 		sed \
 		    -e 's@include "modules\([^"]*\)"@include <skia/modules\1>@g' \
@@ -149,38 +147,6 @@ src_install() {
 		"$DLIBDIR/libskunicode_core.so"
 	patchelf --add-rpath "$ABILIBDIR"  \
 		"$DLIBDIR/libskunicode_icu.so"
-	#patchelf --replace-needed				\
-	#	libskshaper.so						\
-	#	"$ABILIBDIR/libskshaper.so"			\
-	#	"$DLIBDIR/libskparagraph.so"		\
-	#	|| die "unable to patchelf"
-	#patchelf --replace-needed				\
-	#	libskunicode_core.soc				\
-	#	"$ABILIBDIR/libskunicode_core.so"	\
-	#	"$DLIBDIR/libskparagraph.so"		\
-	#	|| die "unable to patchelf"
-	#patchelf --replace-needed				\
-	#	libskunicode_icu.so					\
-	#	"$ABILIBDIR/libskunicode_icu.so"	\
-	#	"$DLIBDIR/libskparagraph.so"		\
-	#	|| die "unable to patchelf"
-
-	#patchelf --replace-needed				\
-	#	libskunicode_core.so				\
-	#	"$ABILIBDIR/libskunicode_core.so"	\
-	#	"$DLIBDIR/libskshaper.so"			\
-	#	|| die "unable to patchelf"
-	#patchelf --replace-needed				\
-	#	libskunicode_icu.so					\
-	#	"$ABILIBDIR/libskunicode_icu.so"	\
-	#	"$DLIBDIR/libskshaper.so"			\
-	#	|| die "unable to patchelf"
-
-	#patchelf --replace-needed				\
-	#	libskunicode_core.so				\
-	#	"$ABILIBDIR/libskunicode_core.so"	\
-	#	"$DLIBDIR/libskunicode_icu.so"		\
-	#	|| die "unable to patchelf"
 
 	dodir /usr/share/pkgconfig
 	cat > "${D}/usr/share/pkgconfig/skia.pc"<<EOF
