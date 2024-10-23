@@ -113,11 +113,9 @@ src_configure() {
 	# i don't get cmake. it's a total waste of time on the docs while patching the generated is easy
 	# webp is lib prefixed...
 	# it chooses the libsimdutf.a instead .so when everywhere the opposite is stated
-	# doesn't add -lskia where needed (probably it can now do it)
 	sed -i ${BUILD_DIR}/build.ninja \
 		-e 's@/usr/local/lib64/libsimdutf.a@/usr/lib64/libsimdutf.so@g' \
 		-e 's/-llibwebpmux/-lwebpmux/g' \
-		-e 's@^  LINK_LIBRARIES.*liblagom-gfx.so.*$@& `pkg-config --libs skia`@' \
 		|| die "unable to patch build.ninja"
 }
 
