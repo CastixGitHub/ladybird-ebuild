@@ -62,15 +62,15 @@ include_directories(''${WEBP_INCLUDE_DIRS})
 link_directories(''${WEBP_LIBRARY_DIRS})
 EOF
 	# added some more love
-	sed -i ${S}/Userland/Libraries/LibGfx/CMakeLists.txt -e "s/find_package(WebP REQUIRED)/pkg_check_modules(WebP REQUIRED IMPORTED_TARGET webp)\nfind_package(WebP REQUIRED IMPORTED TARGET)/" || die "unable to patch"
-	sed -i ${S}/Userland/Libraries/LibGfx/CMakeLists.txt -e s/WebP::webp/webp/g || die "unable to patch"
-	sed -i ${S}/Userland/Libraries/LibGfx/CMakeLists.txt -e s/WebP::libwebp/webp/g || die "unable to patch"
+	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e "s/find_package(WebP REQUIRED)/pkg_check_modules(WebP REQUIRED IMPORTED_TARGET webp)\nfind_package(WebP REQUIRED IMPORTED TARGET)/" || die "unable to patch"
+	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e s/WebP::webp/webp/g || die "unable to patch"
+	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e s/WebP::libwebp/webp/g || die "unable to patch"
 	# dear cmake understander: see build.ninja patched below. this makes no sense to me
 	#sed -i ${S}/AK/CMakeLists.txt -e "s/find_package(simdutf REQUIRED)/find_package(PkgConfig)\npkg_check_modules(simdutf REQUIRED IMPORTED_TARGET GLOBAL)\nfind_package(simdutf REQUIRED SHARED)/g" || die "unable to patch"
 
 	# patch skia include paths
 	echo "patching..." 1>&2
-	for f in $(find ${S}/Userland/Libraries -type f -regex '.*\.[h|c]p*p*$') ; do
+	for f in $(find ${S}/Libraries -type f -regex '.*\.[h|c]p*p*$') ; do
 		echo "patching $f" 1>&2
 		sed \
 			-e 's@include <\([^/]*\)/Sk@include <skia/\1/Sk@g' \
@@ -89,7 +89,7 @@ EOF
 	# write(2, "Unable to increase open file limit: setrlimit: Invalid argument (errno=22)\n",       75) = 75
 	# also it feels weird to have so many file descriptors simultaneously, even for 15 tabs.
 	# don't they get closed? like mapped to memory, cached or something...
-	sed -i ${S}/Userland/Libraries/LibWebView/ChromeProcess.cpp \
+	sed -i ${S}/Libraries/LibWebView/ChromeProcess.cpp \
 		-e 's/8192/4096/' || or die "unable to patch setrlimit"
 	ln -s /etc/ssl/certs/ca-certificates.crt ${S}/Lagom/cacert.pem || die "unable to copy ca-certificates"
 
