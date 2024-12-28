@@ -20,9 +20,6 @@ RESTRICT="mirror"
 SLOT="0"
 KEYWORDS=""
 
-# clang takes 10h to 24 hours on my pc
-# gcc 30minuts to 1 hour (my cpufreq is broken)
-
 IUSE="clang"
 
 # how to version check skia on 9999?
