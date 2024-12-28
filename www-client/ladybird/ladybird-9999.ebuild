@@ -108,7 +108,7 @@ src_configure() {
 	# webp is lib prefixed...
 	# it chooses the libsimdutf.a instead .so when everywhere the opposite is stated
 	sed -i ${BUILD_DIR}/build.ninja \
-		-e 's@/usr/local/lib64/libsimdutf.a@/usr/lib64/libsimdutf.so@g' \
+		-e 's@/usr/local/\(lib[0-9]*\)/libsimdutf.a@/usr/\1/libsimdutf.so@g' \
 		-e 's/-llibwebpmux/-lwebpmux/g' \
 		|| die "unable to patch build.ninja"
 }
