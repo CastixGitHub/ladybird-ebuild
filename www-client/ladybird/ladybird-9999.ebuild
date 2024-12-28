@@ -88,13 +88,6 @@ EOF
 	# patching cmake verify globs
 	mkdir -p ${S}/Lagom || die "unable to create directory"
 
-	# this setrlimit is invalid
-	# prlimit64(0, RLIMIT_NOFILE, {rlim_cur=8*1024, rlim_max=4*1024}, NULL) = -1 EINVAL (Inval      id argument)
-	# write(2, "Unable to increase open file limit: setrlimit: Invalid argument (errno=22)\n",       75) = 75
-	# also it feels weird to have so many file descriptors simultaneously, even for 15 tabs.
-	# don't they get closed? like mapped to memory, cached or something...
-	sed -i ${S}/Libraries/LibWebView/ChromeProcess.cpp \
-		-e 's/8192/4096/' || or die "unable to patch setrlimit"
 	ln -s /etc/ssl/certs/ca-certificates.crt ${S}/Lagom/cacert.pem || die "unable to copy ca-certificates"
 
 	cmake_src_prepare
