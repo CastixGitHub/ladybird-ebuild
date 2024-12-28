@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( 17 18 )
+LLVM_COMPAT=( 18 19 )
 LLVM_OPTIONAL="yeah"
 inherit git-r3 cmake llvm-r1
 
