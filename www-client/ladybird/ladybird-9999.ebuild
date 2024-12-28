@@ -72,13 +72,17 @@ EOF
 	echo "patching..." 1>&2
 	for f in $(find ${S}/Libraries -type f -regex '.*\.[h|c]p*p*$') ; do
 		echo "patching $f" 1>&2
+		# patching all "include <whatever/SkSomething>"
+		# into "include <skia/whatever/SkSomething>"
+		# but skipping <LibGfx/SkiaBackendContext.h>
+		# through a negative lookbehind ?<!
 		sed \
-			-e 's@include <\([^/]*\)/Sk@include <skia/\1/Sk@g' \
+			-e 's@include <\([^/]*\)\(?<!LibGfx\)/Sk@include <skia/\1/Sk@g' \
 			-e 's@include <gpu/\([^>]*\)@include <skia/gpu/\1@g' \
 			-i ${f} || die "unable to patch skia includes $f"
 	done
 
-	# patch cmake copying a file it dodn't download
+	# patch cmake copying a file it didn't download
 	sed -i ${S}/Meta/CMake/ca_certificates_data.cmake \
 		-e 's@^.*configure_file.*$@#&@'
 	# patching cmake verify globs
