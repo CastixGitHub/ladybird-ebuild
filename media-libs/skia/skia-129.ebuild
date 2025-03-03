@@ -2,7 +2,7 @@
 # Distributed under the terms of the GNU General Public License v2
 
 EAPI=8
-LLVM_COMPAT=( 17 18 )
+LLVM_COMPAT=( 18 19 )
 LLVM_OPTIONAL="yeah"
 inherit git-r3 llvm-r1
 
@@ -34,8 +34,8 @@ BDEPEND="
 	dev-build/gn
 	clang? (
 		$(llvm_gen_dep '
-			sys-devel/clang:${LLVM_SLOT}=
-			sys-devel/llvm:${LLVM_SLOT}=
+			llvm-core/clang:${LLVM_SLOT}=
+			llvm-core/llvm:${LLVM_SLOT}=
 		')
 	)
 	dev-util/spirv-tools
@@ -66,9 +66,9 @@ skia_use_zlib=false \
 	if use clang ; then
 		_LL_BIN="/usr/lib/llvm/${LLVM_SLOT}/bin/"
 		export CC="${_LL_BIN}clang"
-		export CPP="${_LL_BIN}clang-cpp" # unecessary?
 		export CXX="${_LL_BIN}clang++"
-		myskiaargs+="cc=\"${CC}\" cxx=\"${CXX}\""
+		#myskiaargs+="cc=\"${CC}\" cxx=\"${CXX}\" "
+		myskiaargs+="cc=\"clang\" cxx=\"clang++\" "
 	fi
 
 	gn gen out --args="${myskiaargs}"
