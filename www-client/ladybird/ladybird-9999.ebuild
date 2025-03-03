@@ -26,6 +26,8 @@ IUSE="clang"
 DEPEND="
 	media-libs/skia:129
 	media-libs/libwebp
+	media-libs/libavif
+	media-libs/>=libpng-1.4.45
 	virtual/libcrypt
 	dev-db/sqlite
 	dev-libs/icu
