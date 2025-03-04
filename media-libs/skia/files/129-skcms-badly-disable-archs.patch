@@ -1,0 +1,31 @@
+diff --git a/modules/skcms/skcms.cc b/modules/skcms/skcms.cc
+index cc1b699248..0a471d756a 100644
+--- a/modules/skcms/skcms.cc
++++ b/modules/skcms/skcms.cc
+@@ -2794,25 +2794,7 @@ bool skcms_Transform(const void*             src,
+     assert(ops      <= program + ARRAY_COUNT(program));
+     assert(contexts <= context + ARRAY_COUNT(context));
+ 
+-    auto run = baseline::run_program;
+-    switch (cpu_type()) {
+-        case CpuType::SKX:
+-            #if !defined(SKCMS_DISABLE_SKX)
+-                run = skx::run_program;
+-                break;
+-            #endif
+-
+-        case CpuType::HSW:
+-            #if !defined(SKCMS_DISABLE_HSW)
+-                run = hsw::run_program;
+-                break;
+-            #endif
+-
+-        case CpuType::Baseline:
+-            break;
+-    }
+-
+-    run(program, context, ops - program, (const char*)src, (char*)dst, n, src_bpp,dst_bpp);
++    baseline::run_program(program, context, ops - program, (const char*)src, (char*)dst, n, src_bpp,dst_bpp);
+     return true;
+ }
+ 

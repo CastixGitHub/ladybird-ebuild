@@ -1,0 +1,13 @@
+diff --git a/BUILD.gn b/BUILD.gn
+index 1242739eff..e2601c0c1d 100644
+--- a/BUILD.gn
++++ b/BUILD.gn
+@@ -121,7 +121,7 @@ config("skia_private") {
+   }
+ 
+   # Temporary staging flag:
+-  defines += [ "SK_ENABLE_AVX512_OPTS" ]
++  # defines += [ "SK_ENABLE_AVX512_OPTS" ]
+ }
+ 
+ # Any code that's linked into Skia-the-library should use this config via += skia_library_configs.

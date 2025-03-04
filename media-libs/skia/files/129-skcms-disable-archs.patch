@@ -1,0 +1,34 @@
+diff --git a/modules/skcms/BUILD.gn b/modules/skcms/BUILD.gn
+index 929c3105fc..c5c2d57569 100644
+--- a/modules/skcms/BUILD.gn
++++ b/modules/skcms/BUILD.gn
+@@ -91,6 +91,16 @@ static_library("skcms") {
+       "SKCMS_DISABLE_SKX",
+     ]
+   }
++  if (skcms_disable_hsw == "true") {
++    defines = [
++      "SKCMS_DISABLE_HSW",
++    ]
++  }
++  if (skcms_disable_skx == "true") {
++    defines = [
++      "SKCMS_DISABLE_SKX",
++    ]
++  }
+   public = skcms_public_headers
+   sources = skcms_public + skcms_TransformBaseline
+   deps = [
+diff --git a/modules/skcms/skcms.gni b/modules/skcms/skcms.gni
+index 62fe24873d..7fff79c338 100644
+--- a/modules/skcms/skcms.gni
++++ b/modules/skcms/skcms.gni
+@@ -1,3 +1,8 @@
++declare_args() {
++    skcms_disable_hsw = false
++    skcms_disable_skx = false
++}
++
+ # DO NOT EDIT: This is a generated file.
+ # See //bazel/exporter_tool/README.md for more information.
+ #

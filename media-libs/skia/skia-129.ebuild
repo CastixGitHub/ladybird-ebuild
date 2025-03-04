@@ -44,6 +44,17 @@ BDEPEND="
 
 IUSE="clang"
 
+PATCHES=(
+	# a temporary need
+	"${FILESDIR}"/129-dont-force-avx512.patch
+	# gcc only patch
+	"${FILESDIR}"/129-get-rid-of-stdc11.patch
+	# allow to disable hsw and skx on skcms
+	"${FILESDIR}"/129-skcms-disable-archs.patch
+	# didn't work, doing it always then
+	"${FILESDIR}"/129-skcms-badly-disable-archs.patch
+)
+
 src_prepare() {
 	local myskiaargs=""
 	myskiaargs+=" \
@@ -61,6 +72,8 @@ skia_enable_spirv_validation=false \
 skia_use_dng_sdk=false \
 skia_use_wuffs=false \
 skia_use_zlib=false \
+skcms_disable_hsw=true \
+skcms_disable_skx=true \
 "
 
 	if use clang ; then
@@ -71,8 +84,14 @@ skia_use_zlib=false \
 		myskiaargs+="cc=\"clang\" cxx=\"clang++\" "
 	fi
 
-	gn gen out --args="${myskiaargs}"
+	# myskiaargs+="-DSKCMS_API=__attribute__((visibility(\\\\\\\"default\\\\\\\")))"
+
+	eapply "${FILESDIR}"/129-dont-force-avx512.patch
+	eapply "${FILESDIR}"/129-get-rid-of-stdc11.patch
+	eapply "${FILESDIR}"/129-skcms-disable-archs.patch
+	eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
 	eapply_user
+	gn gen out --args="${myskiaargs}" || die "gn failed"
 }
 
 src_compile() {
