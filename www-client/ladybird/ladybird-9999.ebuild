@@ -28,6 +28,7 @@ DEPEND="
 	media-libs/libwebp
 	media-libs/libavif
 	>=media-libs/libpng-1.6.45
+	media-libs/libglvnd
 	virtual/libcrypt
 	dev-db/sqlite
 	dev-libs/icu
@@ -66,6 +67,11 @@ EOF
 	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e s/WebP::libwebp/webp/g || die "unable to patch"
 	# dear cmake understander: see build.ninja patched below. this makes no sense to me
 	#sed -i ${S}/AK/CMakeLists.txt -e "s/find_package(simdutf REQUIRED)/find_package(PkgConfig)\npkg_check_modules(simdutf REQUIRED IMPORTED_TARGET GLOBAL)\nfind_package(simdutf REQUIRED SHARED)/g" || die "unable to patch"
+
+	# patch WebGL linking with GLESv2
+	sed -i "${S}/Libraries/LibWeb/CMakeLists.txt" \
+		-e "s/\(target_link_libraries(LibWeb\)\([^)]*\)/\1\2 GLESv2 GL/" \
+		|| die "Unable to add GLESv2 linking"
 
 	# patch skia include paths
 	echo "patching..." 1>&2
@@ -107,11 +113,13 @@ src_configure() {
 	cmake_src_configure
 
 	# i don't get cmake. it's a total waste of time on the docs while patching the generated is easy
-	# webp is lib prefixed...
-	# it chooses the libsimdutf.a instead .so when everywhere the opposite is stated
+	# 1. webp is lib prefixed...
+	# 2. it chooses the libsimdutf.a instead .so when everywhere the opposite is stated
+	# 3. Ladybird also uses skcms to do color correction on images. This one is better not to come from pkg-config I think. If you wonder, Ladybird's skia is vendored: they do some visibility hack instead of statically linking skcms (we should do this the cmake way)
 	sed -i ${BUILD_DIR}/build.ninja \
 		-e 's@/usr/local/\(lib[0-9]*\)/libsimdutf.a@/usr/\1/libsimdutf.so@g' \
 		-e 's/-llibwebpmux/-lwebpmux/g' \
+		-e "s@skia.so@skia.so /usr/$(get_libdir)/skia/libskcms.a@g" \
 		|| die "unable to patch build.ninja"
 }
 
