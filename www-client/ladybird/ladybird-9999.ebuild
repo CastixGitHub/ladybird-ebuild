@@ -62,7 +62,7 @@ include_directories(''${WEBP_INCLUDE_DIRS})
 link_directories(''${WEBP_LIBRARY_DIRS})
 EOF
 	# added some more love
-	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e "s/find_package(WebP REQUIRED)/pkg_check_modules(WebP REQUIRED IMPORTED_TARGET webp)\nfind_package(WebP REQUIRED IMPORTED TARGET)/" || die "unable to patch"
+	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e "s/find_package(WebP REQUIRED)/pkg_check_modules(WebP REQUIRED IMPORTED_TARGET libwebp)\nfind_package(WebP REQUIRED IMPORTED TARGET)/" || die "unable to patch"
 	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e s/WebP::webp/webp/g || die "unable to patch"
 	sed -i ${S}/Libraries/LibGfx/CMakeLists.txt -e s/WebP::libwebp/webp/g || die "unable to patch"
 	# dear cmake understander: see build.ninja patched below. this makes no sense to me
