@@ -13,7 +13,7 @@ EGIT_REPO_URI="https://github.com/ladybirdbrowser/ladybird.git"
 EGIT_COMMIT="HEAD"
 #https://download.adobe.com/pub/adobe/iccprofiles/win/AdobeICCProfilesCS4Win_end-user.zip
 SRC_URI="
-https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.dat -> suffixes
+https://raw.githubusercontent.com/publicsuffix/list/76dbfcab5c3f0b1ac4e78ebeb6273a8b4db74ab7/public_suffix_list.dat -> suffixes
 "
 RESTRICT="mirror"
 
