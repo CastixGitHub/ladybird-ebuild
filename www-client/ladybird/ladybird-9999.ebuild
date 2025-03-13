@@ -24,11 +24,11 @@ IUSE="clang"
 
 # how to version check skia on 9999?
 DEPEND="
-	media-libs/skia:129
+	=media-libs/skia-129-r1
 	media-libs/libjxl
 	media-libs/libwebp
 	media-libs/libavif
-	>=media-libs/libpng-1.6.45[apng(+)]
+	>=media-libs/libpng-1.6.45[apng]
 	media-libs/libglvnd
 	virtual/libcrypt
 	dev-db/sqlite
