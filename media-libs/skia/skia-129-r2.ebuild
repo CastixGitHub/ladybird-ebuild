@@ -11,10 +11,9 @@ HOMEPAGE="https://skia.org"
 EGIT_REPO_URI="https://skia.googlesource.com/skia.git"
 EGIT_BRANCH="chrome/m${PV}"
 
-SRC_URI="
-https://raw.githubusercontent.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/c788c52156f3ef7bc7ab769cb03c110a53ac8fcb/include/vk_mem_alloc.h -> vk_mem_alloc.h
-"
-LICENSE="BSD"
+# TODO: How can one make a conditional SRC_URI?
+SRC_URI="https://skia.googlesource.com/external/github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/+/refs/tags/v3.2.1/include/vk_mem_alloc.h -> vk_mem_alloc.h"
+LICENSE="BSD"  # Vulkan Memory Allocator is MIT
 SLOT="${PV}"
 KEYWORDS="~amd64"
 CXX_FLAGS="-std=c++17"
@@ -29,6 +28,7 @@ DEPEND="
 	media-libs/harfbuzz
 	dev-libs/icu
 	dev-libs/expat
+	vulkan? ( media-libs/vulkan-loader )
 "
 RDEPEND="${DEPEND}"
 # dev-util/spirv-tools for intel iGPUs
@@ -45,7 +45,7 @@ BDEPEND="
 	dev-util/patchelf
 "
 
-IUSE="clang"
+IUSE="clang vulkan"
 
 PATCHES=(
 	# a temporary need
@@ -57,6 +57,7 @@ PATCHES=(
 	# didn't work, doing it always then
 	"${FILESDIR}"/129-skcms-badly-disable-archs.patch
 )
+
 
 src_prepare() {
 	local myskiaargs=""
@@ -75,15 +76,16 @@ skia_enable_spirv_validation=false \
 skia_use_dng_sdk=false \
 skia_use_wuffs=false \
 skia_use_zlib=false \
+skia_use_vulkan=$(usex vulkan 'true' 'false') \
 skcms_disable_hsw=true \
 skcms_disable_skx=true \
-skia_use_vulkan=true \
 "
 
 	if use clang ; then
 		_LL_BIN="/usr/lib/llvm/${LLVM_SLOT}/bin/"
 		export CC="${_LL_BIN}clang"
 		export CXX="${_LL_BIN}clang++"
+		#myskiaargs+="cc=\"${CC}\" cxx=\"${CXX}\" "
 		myskiaargs+="cc=\"clang\" cxx=\"clang++\" "
 	fi
 
@@ -92,7 +94,11 @@ skia_use_vulkan=true \
 	eapply "${FILESDIR}"/129-skcms-disable-archs.patch
 	eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
 	eapply_user
-	cp /var/cache/distfiles/vk_mem_alloc.h ${WORKDIR}/skia-129/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h || die "copying vk_mem_alloc.h"
+	if use vulkan ; then
+		cp /var/cache/distfiles/vk_mem_alloc.h \
+		   ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
+		   || die "copying vk_mem_alloc.h"
+	fi
 	gn gen out --args="${myskiaargs}" || die "gn failed"
 }
 
