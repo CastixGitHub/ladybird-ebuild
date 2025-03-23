@@ -13,7 +13,7 @@ EGIT_REPO_URI="https://github.com/ladybirdbrowser/ladybird.git"
 EGIT_COMMIT="HEAD"
 #https://download.adobe.com/pub/adobe/iccprofiles/win/AdobeICCProfilesCS4Win_end-user.zip
 SRC_URI="
-https://raw.githubusercontent.com/publicsuffix/list/master/public_suffix_list.dat -> suffixes
+https://raw.githubusercontent.com/publicsuffix/list/76dbfcab5c3f0b1ac4e78ebeb6273a8b4db74ab7/public_suffix_list.dat -> suffixes
 "
 RESTRICT="mirror"
 
@@ -24,14 +24,17 @@ IUSE="clang"
 
 # how to version check skia on 9999?
 DEPEND="
-	media-libs/skia:129
+	=media-libs/skia-129-r2
+	media-libs/libjxl
 	media-libs/libwebp
 	media-libs/libavif
-	>=media-libs/libpng-1.6.45
+	>=media-libs/libpng-1.6.45[apng]
+	media-libs/woff2
 	media-libs/libglvnd
 	virtual/libcrypt
 	dev-db/sqlite
 	dev-libs/icu
+	dev-cpp/simdutf
 	dev-qt/qtbase:6[network,widgets,gui]
 	app-misc/ca-certificates
 "

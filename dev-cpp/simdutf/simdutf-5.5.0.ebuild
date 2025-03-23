@@ -10,7 +10,7 @@ DESCRIPTION="Unicode and base64 @GB/s"
 HOMEPAGE="https://simdutf.github.io/simdutf"
 #SRC_URI="https://github.com/simdutf/simdutf/releases/download/v${PV}/singleheader.zip"
 EGIT_REPO_URI="https://github.com/simdutf/simdutf"
-EGIT_COMMIT="v${PV}" #"v5.5.0"
+EGIT_COMMIT="v${PV}" #"v5.6.0"
 
 LICENSE="Apache-2.0"
 SLOT="0"

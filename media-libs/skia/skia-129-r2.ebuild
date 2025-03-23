@@ -11,7 +11,9 @@ HOMEPAGE="https://skia.org"
 EGIT_REPO_URI="https://skia.googlesource.com/skia.git"
 EGIT_BRANCH="chrome/m${PV}"
 
-LICENSE="BSD"
+# TODO: How can one make a conditional SRC_URI?
+SRC_URI="https://skia.googlesource.com/external/github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/+/refs/tags/v3.2.1/include/vk_mem_alloc.h -> vk_mem_alloc.h"
+LICENSE="BSD"  # Vulkan Memory Allocator is MIT
 SLOT="${PV}"
 KEYWORDS="~amd64"
 CXX_FLAGS="-std=c++17"
@@ -26,6 +28,7 @@ DEPEND="
 	media-libs/harfbuzz
 	dev-libs/icu
 	dev-libs/expat
+	vulkan? ( media-libs/vulkan-loader )
 "
 RDEPEND="${DEPEND}"
 # dev-util/spirv-tools for intel iGPUs
@@ -42,7 +45,7 @@ BDEPEND="
 	dev-util/patchelf
 "
 
-IUSE="clang"
+IUSE="clang vulkan"
 
 PATCHES=(
 	# a temporary need
@@ -54,6 +57,7 @@ PATCHES=(
 	# didn't work, doing it always then
 	"${FILESDIR}"/129-skcms-badly-disable-archs.patch
 )
+
 
 src_prepare() {
 	local myskiaargs=""
@@ -72,6 +76,7 @@ skia_enable_spirv_validation=false \
 skia_use_dng_sdk=false \
 skia_use_wuffs=false \
 skia_use_zlib=false \
+skia_use_vulkan=$(usex vulkan 'true' 'false') \
 skcms_disable_hsw=true \
 skcms_disable_skx=true \
 "
@@ -84,13 +89,16 @@ skcms_disable_skx=true \
 		myskiaargs+="cc=\"clang\" cxx=\"clang++\" "
 	fi
 
-	# myskiaargs+="-DSKCMS_API=__attribute__((visibility(\\\\\\\"default\\\\\\\")))"
-
 	eapply "${FILESDIR}"/129-dont-force-avx512.patch
 	eapply "${FILESDIR}"/129-get-rid-of-stdc11.patch
 	eapply "${FILESDIR}"/129-skcms-disable-archs.patch
 	eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
 	eapply_user
+	if use vulkan ; then
+		cp /var/cache/distfiles/vk_mem_alloc.h \
+		   ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
+		   || die "copying vk_mem_alloc.h"
+	fi
 	gn gen out --args="${myskiaargs}" || die "gn failed"
 }
 
@@ -110,7 +118,7 @@ src_install() {
 		else
 			dp="$D/usr/include/skia/modules/$(basename $(dirname $f))/$(basename $f)"
 		fi
-		if [[ ! -d $(dirname $dp) ]] then
+		if [[ ! -d $(dirname $dp) ]]; then
 			echo "creating folder $(dirname $dp)" 2>&1
 			mkdir -p $(dirname $dp) || die "unable to create a folder $(dirname $dp)"
 		fi
