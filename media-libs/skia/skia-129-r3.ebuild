@@ -12,7 +12,7 @@ EGIT_REPO_URI="https://skia.googlesource.com/skia.git"
 EGIT_BRANCH="chrome/m${PV}"
 
 # TODO: How can one make a conditional SRC_URI?
-SRC_URI="https://skia.googlesource.com/external/github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/+/refs/tags/v3.2.1/include/vk_mem_alloc.h -> vk_mem_alloc.h"
+SRC_URI="https://skia.googlesource.com/external/github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/+/refs/tags/v3.2.1/include/vk_mem_alloc.h?format=TEXT -> vk_mem_alloc.h.b64"
 LICENSE="BSD"  # Vulkan Memory Allocator is MIT
 SLOT="${PV}"
 KEYWORDS="~amd64"
@@ -95,8 +95,8 @@ skcms_disable_skx=true \
 	eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
 	eapply_user
 	if use vulkan ; then
-		cp /var/cache/distfiles/vk_mem_alloc.h \
-		   ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
+		base64 -d /var/cache/distfiles/vk_mem_alloc.h.b64 \
+		   > ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
 		   || die "copying vk_mem_alloc.h"
 	fi
 	gn gen out --args="${myskiaargs}" || die "gn failed"
