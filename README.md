@@ -13,7 +13,7 @@ This Repository contains Gentoo ebuilds for:
 
 If you want to contribute to Ladybird development
 
-This might help you doing so (set EGIT_LADYBIRD_REPO to your fork)
+This might help you doing so (set EGIT_REPO_URI in `www-client/ladybird/ladybird-9999.ebuild` to your fork)
 
 
 ##### Disclaimer
