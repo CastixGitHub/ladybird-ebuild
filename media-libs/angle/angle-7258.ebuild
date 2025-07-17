@@ -17,7 +17,7 @@ inherit git-r3
 EGIT_LFS=1
 EGIT_REPO_URI="https://chromium.googlesource.com/angle/angle.git"
 EGIT_BRANCH="main"
-EGIT_COMMIT="ec2a04cc9535607a209989e093254d1290d0d2f5"
+EGIT_COMMIT="79ac1a8cd767a32cce6401203e20c4bd4ca4d539"
 
 # Not using submodule for jsoncpp, see repo:angle/DEPS for the reason
 SRC_URI="https://github.com/open-source-parsers/jsoncpp/archive/refs/tags/1.9.6.tar.gz -> jsoncpp-1.9.6.tar.gz"
@@ -123,6 +123,7 @@ src_prepare() {
     echo starting src_prepare
     echo CURDIR: $PWD
 
+    # Hoping the patches can stay the same...
     eapply -p0 "${FILESDIR}"/7287-sysroot.gni.patch
     eapply -p0 "${FILESDIR}"/7287-test.gni.patch
     eapply -p0 "${FILESDIR}"/7287-config.BUILD.gn.patch

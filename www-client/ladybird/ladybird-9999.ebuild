@@ -30,7 +30,7 @@ IUSE="clang"
 # how to version check skia on 9999?
 DEPEND="
 	>=media-libs/skia-129
-	media-libs/angle
+    =media-libs/angle-7258
 	media-libs/libjxl
 	media-libs/libwebp
 	media-libs/libavif
