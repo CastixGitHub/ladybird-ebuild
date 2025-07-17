@@ -1,0 +1,12 @@
+--- build/config/sysroot.gni	2025-07-13 09:02:45.369989740 +0200
++++ build/config/sysroot.gni	2025-07-13 09:09:24.819363597 +0200
+@@ -62,9 +62,6 @@
+       } else if (_script_arch == "x64") {
+         _script_arch = "amd64"
+       }
+-      assert(
+-          path_exists(sysroot),
+-          "Missing sysroot ($sysroot). To fix, run: build/linux/sysroot_scripts/install-sysroot.py --arch=$_script_arch")
+     }
+   } else if (is_mac) {
+     import("//build/config/mac/mac_sdk.gni")

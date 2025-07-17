@@ -1,0 +1,11 @@
+--- testing/test.gni	2025-07-13 09:02:45.426654692 +0200
++++ testing/test.gni	2025-07-13 09:10:42.858763354 +0200
+@@ -19,7 +19,7 @@
+   # "location_tags.json", and so we don't want to try and upload the tags
+   # for their tests.
+   # And, some build configs may simply turn off generation altogether.
+-  tests_have_location_tags = generate_location_tags
++  # tests_have_location_tags = generate_location_tags
+ 
+   # Build individual_fuzztest_wrapper if use_fuzztest_wrapper is set.
+   # Some projects doesn't have //base and cannot build

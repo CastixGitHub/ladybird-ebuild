@@ -1,0 +1,13 @@
+diff --git a/Meta/CMake/lagom_install_options.cmake b/Meta/CMake/lagom_install_options.cmake
+index 97f10d5b49..bcce039573 100644
+--- a/Meta/CMake/lagom_install_options.cmake
++++ b/Meta/CMake/lagom_install_options.cmake
+@@ -38,7 +38,7 @@ if (APPLE)
+     set(CMAKE_INSTALL_NAME_DIR "@rpath")
+     set(CMAKE_INSTALL_RPATH "@executable_path/../lib")
+ else()
+-    set(CMAKE_INSTALL_RPATH "$ORIGIN:$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
++    set(CMAKE_INSTALL_RPATH "/usr/lib64/angle:$ORIGIN:$ORIGIN/../${CMAKE_INSTALL_LIBDIR}")
+ endif()
+ set(CMAKE_INSTALL_RPATH_USE_LINK_PATH TRUE)
+ 

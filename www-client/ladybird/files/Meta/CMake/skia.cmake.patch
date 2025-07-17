@@ -1,0 +1,16 @@
+diff --git a/Meta/CMake/skia.cmake b/Meta/CMake/skia.cmake
+index 11b9e53415..d18cdfbfe3 100644
+--- a/Meta/CMake/skia.cmake
++++ b/Meta/CMake/skia.cmake
+@@ -14,7 +14,10 @@ if(unofficial-skia_FOUND)
+         set_property(TARGET unofficial::skia::skia APPEND PROPERTY INTERFACE_COMPILE_DEFINITIONS "SKCMS_API=__declspec(dllimport)")
+     endif()
+ else()
+-    find_package(PkgConfig)
++    find_package(PkgConfig REQUIRED QUIET)
++    pkg_check_modules(SKIA REQUIRED QUIET skia)
++    include_directories(${SKIA_INCLUDE_DIRS})
++    link_directories(${SKIA_LIBRARY_DIRS})
+ 
+     # Get skia version from vcpkg.json
+     file(READ ${LADYBIRD_SOURCE_DIR}/vcpkg.json VCPKG_DOT_JSON)

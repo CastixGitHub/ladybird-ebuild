@@ -1,0 +1,35 @@
+--- build/config/compiler/BUILD.gn	2025-07-13 22:10:05.501521140 +0200
++++ build/config/compiler/BUILD.gn	2025-07-13 22:20:13.152929255 +0200
+@@ -537,7 +537,7 @@
+   # ChromeOS-specific compiler flags setup.
+   # ---------------------------------------
+   if (is_chromeos) {
+-    cflags += [ "-Werror=poison-system-directories" ]
++    cflags += []
+   }
+ 
+   if (is_chromeos_device && current_toolchain == default_toolchain) {
+@@ -1926,12 +1926,12 @@
+   if (is_win) {
+     cflags = [ "/WX" ]
+   } else {
+-    cflags = [ "-Werror" ]
++    cflags = []
+ 
+     # The compiler driver can sometimes (rarely) emit warnings before calling
+     # the actual linker.  Make sure these warnings are treated as errors as
+     # well.
+-    ldflags = [ "-Werror" ]
++    ldflags = []
+   }
+ 
+   # Turn rustc warnings into the "deny" lint level, which produce compiler
+@@ -1939,7 +1939,7 @@
+   #
+   # Note we apply the actual lint flags in config("compiler"). All warnings
+   # are suppressed in third-party crates.
+-  rustflags = [ "-Dwarnings" ]
++  rustflags = []
+ }
+ 
+ # tot_warnings ----------------------------------------------------------------

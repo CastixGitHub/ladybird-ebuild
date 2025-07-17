@@ -1,0 +1,25 @@
+diff --git a/Libraries/LibGfx/CMakeLists.txt b/Libraries/LibGfx/CMakeLists.txt
+index ff66fb2548..0bcec64152 100644
+--- a/Libraries/LibGfx/CMakeLists.txt
++++ b/Libraries/LibGfx/CMakeLists.txt
+@@ -119,8 +119,19 @@ find_package(LIBAVIF REQUIRED)
+ find_package(WebP REQUIRED)
+ find_package(harfbuzz REQUIRED)
+ 
++find_library(
++    SKCMS_LIBRARY
++    NAMES skcms               # Library name (without prefix/suffix)
++    PATHS "/usr/lib64/skia"   # Absolute path where the library is located
++    NO_DEFAULT_PATH           # Skip default search paths
++    QUIET
++)
++if (NOT SKCMS_LIBRARY)
++    message(FATAL_ERROR "Failed to find libskcms.a in /usr/lib64/skia")
++endif()
++
+ target_link_libraries(LibGfx PRIVATE PkgConfig::WOFF2 JPEG::JPEG PNG::PNG avif WebP::webp WebP::webpdecoder
+-            WebP::webpdemux WebP::libwebpmux skia harfbuzz)
++            WebP::webpdemux WebP::libwebpmux skia harfbuzz skcms)
+ 
+ if (HAS_FONTCONFIG)
+     target_link_libraries(LibGfx PRIVATE Fontconfig::Fontconfig)

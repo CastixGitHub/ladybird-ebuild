@@ -1,0 +1,14 @@
+diff --git a/Libraries/LibWeb/CMakeLists.txt b/Libraries/LibWeb/CMakeLists.txt
+index 33b5f61f2e..63e4d9628c 100644
+--- a/Libraries/LibWeb/CMakeLists.txt
++++ b/Libraries/LibWeb/CMakeLists.txt
+@@ -8,7 +8,8 @@ if(unofficial-angle_FOUND)
+ else()
+     find_package(PkgConfig)
+     pkg_check_modules(angle REQUIRED IMPORTED_TARGET angle)
+-    set(ANGLE_TARGETS PkgConfig::angle)
++    pkg_check_modules(GL REQUIRED IMPORTED_TARGET angle_glesv2=0.0.0)
++    set(ANGLE_TARGETS PkgConfig::angle PkgConfig::GL)
+ endif()
+ 
+ set(SOURCES
