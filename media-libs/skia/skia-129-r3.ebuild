@@ -11,11 +11,14 @@ HOMEPAGE="https://skia.org"
 EGIT_REPO_URI="https://skia.googlesource.com/skia.git"
 EGIT_BRANCH="chrome/m${PV}"
 
-SRC_URI="vulkan? ( https://raw.githubusercontent.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/refs/tags/v3.2.1/include/vk_mem_alloc.h -> vk_mem_alloc.h )"
+# SRC_URI="vulkan? ( https://raw.githubusercontent.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/refs/tags/v3.2.1/include/vk_mem_alloc.h -> vk_mem_alloc.h )"
+# We're just being consistent pulling from one git server (even tho is a mirror) (even tho asking for TEXT you get base64 encoded text)
+# Let's use VulkanMemoryAllocator::guru on the next iteration :)
+SRC_URI="vulkan? ( https://skia.googlesource.com/external/github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/+/refs/tags/v3.2.1/include/vk_mem_alloc.h?format=TEXT -> vk_mem_alloc.h.b64 )"
 LICENSE="BSD"  # Vulkan Memory Allocator is MIT
 SLOT="${PV}"
 KEYWORDS="~amd64"
-CXX_FLAGS="-std=c++17"
+# CXX_FLAGS="-std=c++17"  # doesn't get propagated / it is overwritten
 
 
 DEPEND="
@@ -44,28 +47,43 @@ BDEPEND="
 	dev-util/patchelf
 "
 
-IUSE="clang vulkan"
+IUSE="clang vulkan no-avx512"
 
 PATCHES=(
+	# Just list and explain the patches here and apply them conditionally
+	#
 	# a temporary need
-	"${FILESDIR}"/129-dont-force-avx512.patch
+	# "${FILESDIR}"/129-dont-force-avx512.patch
+	#
 	# gcc only patch
-	"${FILESDIR}"/129-get-rid-of-stdc11.patch
+	# "${FILESDIR}"/129-get-rid-of-stdc11.patch
+	#
 	# allow to disable hsw and skx on skcms
-	"${FILESDIR}"/129-skcms-disable-archs.patch
+	# "${FILESDIR}"/129-skcms-disable-archs.patch
+	#
 	# didn't work, doing it always then
-	"${FILESDIR}"/129-skcms-badly-disable-archs.patch
+	# "${FILESDIR}"/129-skcms-badly-disable-archs.patch
 )
 
 
 src_prepare() {
 	if use vulkan ; then
-		cp ${DISTDIR}/vk_mem_alloc.h \
-		   ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
-		   || die "copying vk_mem_alloc.h"
+		base64 -d ${DISTDIR}/vk_mem_alloc.h.b64 \
+			> ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
+			|| die "copying vk_mem_alloc.h"
 	fi
-
-	default
+	if ! use clang ; then
+		eapply "${FILESDIR}"/129-get-rid-of-stdc11.patch  # patch gets rejected
+		# just because something moved and line numbers don't match anymore
+		# ...it just got applied now... (same commit sha, magics...)
+	fi
+	# eapply "${FILESDIR}"/129-dont-force-avx512.patch  # they commented it out
+	if use no-avx512 ; then
+		# eapply "${FILESDIR}"/129-skcms-disable-archs.patch
+		eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
+	fi
+	eapply_user
+	default  # what is default? implicit eapply_user?
 }
 
 src_configure() {
@@ -86,9 +104,10 @@ skia_use_dng_sdk=false \
 skia_use_wuffs=false \
 skia_use_zlib=false \
 skia_use_vulkan=$(usex vulkan 'true' 'false') \
-skcms_disable_hsw=true \
-skcms_disable_skx=true \
 "
+# files/129-skcms-disable-archs.patch also added:
+#skcms_disable_hsw=true \
+#skcms_disable_skx=true \
 
 	if use clang ; then
 		_LL_BIN="/usr/lib/llvm/${LLVM_SLOT}/bin/"
@@ -184,6 +203,7 @@ Version: ${PV}
 Cflags: -I/usr/include/skia
 Libs: -L${ABILIBDIR} -lskia
 EOF
+	# TODO: also create "${D}/usr/share/pkgconfig/skcms.pc"
 	einstalldocs
 }
 
