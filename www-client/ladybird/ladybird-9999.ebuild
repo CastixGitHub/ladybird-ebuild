@@ -20,11 +20,11 @@ RESTRICT="mirror"
 SLOT="0"
 KEYWORDS=""
 
-IUSE="clang"
+IUSE="clang vulkan"
 
 # how to version check skia on 9999?
 DEPEND="
-	>=media-libs/skia-129
+	>=media-libs/skia-129[vulkan?]
 	media-libs/libjxl
 	media-libs/libwebp
 	media-libs/libavif
@@ -106,6 +106,7 @@ src_configure() {
 	local mycmakeargs=(
 		-DENABLE_NETWORK_DOWNLOADS=OFF
 		-DSERENITY_CACHE_DIR=${BUILD_DIR}/downloads
+		-DWITH_VULKAN=$(usex vulkan ON OFF)
 	)
 	mkdir -p ${BUILD_DIR}/downloads/CACERT/ || die "unable to mkdir"
 	mkdir -p ${BUILD_DIR}/downloads/PublicSuffix/ || die "unable to mkdir"
