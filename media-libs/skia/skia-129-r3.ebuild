@@ -11,8 +11,7 @@ HOMEPAGE="https://skia.org"
 EGIT_REPO_URI="https://skia.googlesource.com/skia.git"
 EGIT_BRANCH="chrome/m${PV}"
 
-# TODO: How can one make a conditional SRC_URI?
-SRC_URI="https://skia.googlesource.com/external/github.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/+/refs/tags/v3.2.1/include/vk_mem_alloc.h?format=TEXT -> vk_mem_alloc.h.b64"
+SRC_URI="vulkan? ( https://raw.githubusercontent.com/GPUOpen-LibrariesAndSDKs/VulkanMemoryAllocator/refs/tags/v3.2.1/include/vk_mem_alloc.h -> vk_mem_alloc.h )"
 LICENSE="BSD"  # Vulkan Memory Allocator is MIT
 SLOT="${PV}"
 KEYWORDS="~amd64"
@@ -60,6 +59,16 @@ PATCHES=(
 
 
 src_prepare() {
+	if use vulkan ; then
+		cp ${DISTDIR}/vk_mem_alloc.h \
+		   ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
+		   || die "copying vk_mem_alloc.h"
+	fi
+
+	default
+}
+
+src_configure() {
 	local myskiaargs=""
 	myskiaargs+=" \
 is_official_build=false \
@@ -87,17 +96,6 @@ skcms_disable_skx=true \
 		export CXX="${_LL_BIN}clang++"
 		#myskiaargs+="cc=\"${CC}\" cxx=\"${CXX}\" "
 		myskiaargs+="cc=\"clang\" cxx=\"clang++\" "
-	fi
-
-	eapply "${FILESDIR}"/129-dont-force-avx512.patch
-	eapply "${FILESDIR}"/129-get-rid-of-stdc11.patch
-	eapply "${FILESDIR}"/129-skcms-disable-archs.patch
-	eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
-	eapply_user
-	if use vulkan ; then
-		base64 -d /var/cache/distfiles/vk_mem_alloc.h.b64 \
-		   > ${WORKDIR}/skia-${PV}/src/gpu/vk/vulkanmemoryallocator/vk_mem_alloc.h \
-		   || die "copying vk_mem_alloc.h"
 	fi
 	gn gen out --args="${myskiaargs}" || die "gn failed"
 }
