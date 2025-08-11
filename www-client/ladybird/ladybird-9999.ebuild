@@ -4,7 +4,7 @@
 EAPI=8
 LLVM_COMPAT=( 18 19 )
 LLVM_OPTIONAL="yeah"
-inherit git-r3 cmake llvm-r1
+inherit git-r3 cmake llvm-r1 #xdg-utils
 
 DESCRIPTION="Truly independent web browser"
 LICENSE="BSD-2"
@@ -20,7 +20,7 @@ RESTRICT="mirror"
 SLOT="0"
 KEYWORDS=""
 
-IUSE="clang"
+IUSE="clang ccache"
 
 # how to version check skia on 9999?
 DEPEND="
@@ -35,9 +35,12 @@ DEPEND="
 	dev-db/sqlite
 	dev-libs/icu
 	dev-cpp/simdutf
+	dev-cpp/fast_float
 	dev-qt/qtbase:6[network,widgets,gui]
 	app-misc/ca-certificates
 "
+# /usr/local/include/simdutf takes over /usr/include/simdutf
+# so, make sure the local doesn't exist...
 RDEPEND="${DEPEND}"
 BDEPEND="
 	clang? (
@@ -78,8 +81,8 @@ EOF
 
 	# patch skia include paths
 	echo "patching..." 1>&2
-	for f in $(find ${S}/Libraries -type f -regex '.*\.[h|c]p*p*$') ; do
-		echo "patching $f" 1>&2
+	for f in $(find "${S}"/Libraries -type f -regex '.*\.[h|c]p*p*$') ; do
+		#echo "patching $f" 1>&2
 		# patching all "include <whatever/SkSomething>"
 		# into "include <skia/whatever/SkSomething>"
 		# but skipping <LibGfx/SkiaBackendContext.h>
@@ -87,16 +90,22 @@ EOF
 		sed \
 			-e 's@include <\([^/]*\)\(?<!LibGfx\)/Sk@include <skia/\1/Sk@g' \
 			-e 's@include <gpu/\([^>]*\)@include <skia/gpu/\1@g' \
-			-i ${f} || die "unable to patch skia includes $f"
+			-i "${f}" || die "unable to patch skia includes $f"
 	done
 
-	# patch cmake copying a file it didn't download
-	sed -i ${S}/Meta/CMake/ca_certificates_data.cmake \
-		-e 's@^.*configure_file.*$@#&@'
+	# patch cmake copying a file it didn't download (disappeared)
+	#sed -i "${S}"/Meta/CMake/ca_certificates_data.cmake \
+	#	-e 's@^.*configure_file.*$@#&@'
 	# patching cmake verify globs
-	mkdir -p ${S}/Lagom || die "unable to create directory"
+
+	mkdir -p "${S}"/Lagom || die "unable to create directory"
 
 	ln -s /etc/ssl/certs/ca-certificates.crt ${S}/Lagom/cacert.pem || die "unable to copy ca-certificates"
+
+	eapply "${FILESDIR}"/ANGLE-removal-0.patch  # OpenGLContext and LibWeb/CMakeLists.txt
+	eapply "${FILESDIR}"/ANGLE-removal-1.patch  # WebGL2
+	eapply "${FILESDIR}"/ANGLE-removal-2.patch  # WebGL
+
 
 	cmake_src_prepare
 	eapply_user
@@ -105,14 +114,14 @@ EOF
 src_configure() {
 	local mycmakeargs=(
 		-DENABLE_NETWORK_DOWNLOADS=OFF
-		-DSERENITY_CACHE_DIR=${BUILD_DIR}/downloads
+		-DENABLE_LAGOM_CCACHE=$(usex ccache ON OFF)
 	)
-	mkdir -p ${BUILD_DIR}/downloads/CACERT/ || die "unable to mkdir"
-	mkdir -p ${BUILD_DIR}/downloads/PublicSuffix/ || die "unable to mkdir"
-	mkdir -p ${BUILD_DIR}/Lagom/ || dir "unable to mkdir"
-	ln -s /etc/ssl/certs/ca-certificates.crt ${BUILD_DIR}/Lagom/cacert.pem || die "unable to copy ca-certificates"
-	ln -s /etc/ssl/certs/ca-certificates.crt ${BUILD_DIR}/downloads/CACERT/cacert-2023-12-12.pem || die "copying CA root"
-	cp /var/cache/distfiles/suffixes ${BUILD_DIR}/downloads/PublicSuffix/public_suffix_list.dat || dir "copying suffixes"
+	mkdir -p "${BUILD_DIR}"/caches/CACERT/ || die "unable to mkdir"
+	mkdir -p "${BUILD_DIR}"/caches/PublicSuffix/ || die "unable to mkdir"
+	mkdir -p "${BUILD_DIR}"/Lagom/ || dir "unable to mkdir"
+	ln -s /etc/ssl/certs/ca-certificates.crt "${BUILD_DIR}"/Lagom/cacert.pem || die "unable to copy ca-certificates"
+	ln -s /etc/ssl/certs/ca-certificates.crt "${BUILD_DIR}"/caches/CACERT/cacert-2023-12-12.pem || die "copying CA root"
+	cp "${DISTDIR}"/suffixes "${BUILD_DIR}"/caches/PublicSuffix/public_suffix_list.dat || dir "copying suffixes"
 	cmake_src_configure
 
 	# i don't get cmake. it's a total waste of time on the docs while patching the generated is easy
@@ -128,5 +137,21 @@ src_configure() {
 
 src_compile() {
 	cd ${BUILD_DIR}/
+	# ninja -d keepdepfile -j `nproc`
 	cmake_src_compile
 }
+
+
+# U gotta find and install/remove the .desktop and icon
+#
+#pkg_postinst() {
+#	xdg_icon_cache_update
+#	xdg_desktop_database_update
+#	xdg_mimeinfo_database_update
+#}
+#
+#pkg_postrm() {
+#	xdg_desktop_database_update
+#	xdg_icon_cache_update
+#	xdg_mimeinfo_database_update
+#}

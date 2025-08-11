@@ -56,6 +56,7 @@ PATCHES=(
 	# "${FILESDIR}"/129-dont-force-avx512.patch
 	#
 	# gcc only patch
+	# clang automagically gets -std=c++17
 	# "${FILESDIR}"/129-get-rid-of-stdc11.patch
 	#
 	# allow to disable hsw and skx on skcms
