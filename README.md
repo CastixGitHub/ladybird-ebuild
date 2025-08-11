@@ -20,11 +20,12 @@ This might help you doing so (set:)
  *   EGIT_OVERRIDE_COMMIT_LADYBIRDBROWSER_LADYBIRD
 ```
 
-##### Disclaimer
+##### Disclaimers
 
-Skia and Ladybird have been pached to ensure skia libraries have a prefix
+- Skia and Ladybird have been patched to ensure skia libraries have a prefix
 
-Skia's skcms have been stripped away of some optimizations for >2013 amd64
-You should USE="-no-avx512" on newer cpus (should be reamed into a meaningful name)
+- Skia's skcms have been stripped away of some optimizations for >2013 amd64.
 
-ANGLE have been chopped off, so WebGL may not work on every website, see #12 for more info or alternatives
+  You should USE="-no-avx512" on newer cpus (should be reamed into a meaningful name)
+
+- ANGLE have been chopped off, so WebGL may not work on every website (or not work at all), see PR#12 for more info or alternatives
