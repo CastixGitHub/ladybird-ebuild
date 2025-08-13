@@ -29,3 +29,5 @@ This might help you doing so (set:)
   You should USE="-no-avx512" on newer cpus (should be reamed into a meaningful name)
 
 - ANGLE have been chopped off, so WebGL may not work on every website (or not work at all), see PR#12 for more info or alternatives
+
+  DANGEROUS: That's unsafe! See https://github.com/LadybirdBrowser/ladybird/issues/5785#issuecomment-3182078580
