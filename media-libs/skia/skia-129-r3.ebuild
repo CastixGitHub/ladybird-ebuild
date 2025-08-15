@@ -78,7 +78,7 @@ src_prepare() {
 		# just because something moved and line numbers don't match anymore
 		# ...it just got applied now... (same commit sha, magics...)
 	fi
-	# eapply "${FILESDIR}"/129-dont-force-avx512.patch  # they commented it out
+	eapply "${FILESDIR}"/129-dont-force-avx512.patch
 	if use no-avx512 ; then
 		# eapply "${FILESDIR}"/129-skcms-disable-archs.patch
 		eapply "${FILESDIR}"/129-skcms-badly-disable-archs.patch
